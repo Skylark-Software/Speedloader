@@ -69,8 +69,6 @@ View hot/cold model status with RAM tier usage. Promote models to RAM or demote 
 ### Storage Tiers Tab
 Manage multiple RAM storage tiers - local DDR5, remote NVMe-oF over RDMA, and more. Configure model placement strategies and pin specific models to tiers.
 
-![Storage Tiers Tab](docs/screenshot-tiers.png)
-
 **Features:**
 - **Multiple RAM Tiers**: Local tmpfs + remote NVMe-oF RAM pools
 - **Speed Ratings**: DDR5-5600, DDR4-3200, NVMe-oF, etc.
