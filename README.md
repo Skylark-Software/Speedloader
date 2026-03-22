@@ -11,33 +11,28 @@ Fast hybrid RAM/storage management for LLM models.
 Speedloader creates a hybrid storage tier that keeps frequently-used LLM models in RAM for instant access (~10-15 seconds) while storing others on cold storage.
 
 **Features:**
-- Single statically-linked binary (~10MB) with no dependencies
+- Single binary (~5MB) with no dependencies
 - Web GUI for easy model management
 - Multi-tier RAM storage with speed-based placement
 - Remote RAM pooling via NVMe-oF over RDMA
 - Support for Ollama, llama.cpp, vLLM, and HuggingFace backends
 
-## Download
-
-Download the latest binary from [Releases](https://github.com/Skylark-Software/Speedloader/releases).
-
-## Installation
+## Quick Start
 
 ```bash
-# Download and install binary
-sudo cp speedloader /usr/local/bin/
+# Clone the repo
+git clone https://github.com/Skylark-Software/Speedloader.git
+cd Speedloader
+
+# Install binary
+sudo cp bin/speedloader /usr/local/bin/
 sudo chmod +x /usr/local/bin/speedloader
 
-# Run interactive installer
+# Run interactive installer (detects system, creates config, installs services)
 sudo speedloader install
-```
 
-The installer will:
-1. Detect your system (RAM, storage mounts, Ollama)
-2. Prompt for configuration
-3. Generate `/etc/speedloader/config.json`
-4. Install systemd services
-5. Start the services
+# Web GUI at http://localhost:5050
+```
 
 ## Usage
 
@@ -71,7 +66,7 @@ View hot/cold model status with RAM tier usage. Promote models to RAM or demote 
 ![Models Tab](docs/screenshot-models.png)
 
 ### Storage Tiers Tab
-Manage multiple RAM storage tiers - local DDR5, remote NVMe-oF over RDMA, and more. Configure model placement strategies and pin specific models to tiers.
+Manage multiple RAM storage tiers — local DDR5, remote NVMe-oF over RDMA, and more. Configure model placement strategies and pin specific models to tiers.
 
 **Features:**
 - **Multiple RAM Tiers**: Local tmpfs + remote NVMe-oF RAM pools
@@ -108,7 +103,30 @@ Configure backend, storage paths, and RAM disk settings.
 
 ## Configuration
 
-Configuration is stored at `/etc/speedloader/config.json`. See the [documentation](docs/) for full configuration options.
+Configuration is stored at `/etc/speedloader/config.json`.
+
+The interactive installer (`sudo speedloader install`) detects your system and generates the config. You can also edit it manually:
+
+```json
+{
+  "ramdisk": {
+    "path": "/mnt/ollama-ramdisk",
+    "size": "32G"
+  },
+  "storage": {
+    "path": "/home/user/.ollama/models",
+    "type": "local"
+  },
+  "backend": {
+    "type": "ollama",
+    "apiUrl": "http://localhost:11434"
+  },
+  "web": {
+    "port": 5050,
+    "host": "0.0.0.0"
+  }
+}
+```
 
 ## System Requirements
 
