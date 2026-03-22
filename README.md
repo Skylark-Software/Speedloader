@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/speedloader-logo.svg" alt="Speedloader" width="120">
+</p>
+
 # Speedloader
 
 Fast hybrid RAM/storage management for LLM models.
@@ -117,3 +121,9 @@ Configuration is stored at `/etc/speedloader/config.json`. See the [documentatio
 Copyright 2025-2026 Skylark Software LLC. All Rights Reserved.
 
 This is proprietary software. Unauthorized copying, modification, or distribution is prohibited.
+
+---
+
+<p align="center">
+  <img src="docs/skylark-software-logo.svg" alt="Skylark Software" width="200">
+</p>

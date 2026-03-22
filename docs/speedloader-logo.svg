@@ -1,0 +1,18 @@
+<svg width="520" height="80" viewBox="0 0 520 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200');</style>
+  </defs>
+
+  <!-- Cylinder mark centered on y=40 -->
+  <circle cx="40" cy="40" r="26" fill="none" stroke="#4DC4E8" stroke-width="1.2" opacity="0.4"/>
+  <circle cx="40" cy="40" r="17" fill="none" stroke="#4DC4E8" stroke-width="1" opacity="0.25"/>
+  <circle cx="40" cy="14"  r="2.8" fill="#4DC4E8" opacity="0.9"/>
+  <circle cx="63" cy="27"  r="2.8" fill="#4DC4E8" opacity="0.7"/>
+  <circle cx="63" cy="53"  r="2.8" fill="#4DC4E8" opacity="0.5"/>
+  <circle cx="40" cy="66"  r="2.8" fill="#4DC4E8" opacity="0.35"/>
+  <circle cx="17" cy="53"  r="2.8" fill="#4DC4E8" opacity="0.5"/>
+  <circle cx="17" cy="27"  r="2.8" fill="#F5A623" opacity="0.9"/>
+  <circle cx="40" cy="40"  r="3.2" fill="#F5A623"/>
+
+  <text x="80" y="50" font-family="'Jost',system-ui,sans-serif" font-size="34" font-weight="200" letter-spacing="-0.5" fill="#FFFFFF">Speedloader</text>
+</svg>
