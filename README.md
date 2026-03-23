@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/speedloader-logo.svg" alt="Speedloader" width="120">
+  <img src="docs/speedloader-logo.svg" alt="Speedloader" width="300">
 </p>
 
 # Speedloader
