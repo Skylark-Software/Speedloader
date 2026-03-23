@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/speedloader-logo.svg" alt="Speedloader" width="400">
+  <img src="docs/speedloader-logo.svg" alt="Speedloader" width="600">
 </p>
 
 # Speedloader
@@ -143,5 +143,5 @@ This is proprietary software. Unauthorized copying, modification, or distributio
 ---
 
 <p align="center">
-  <img src="docs/skylark-software-logo.svg" alt="Skylark Software" width="200">
+  <img src="docs/skylark-software-logo.svg" alt="Skylark Software" width="400">
 </p>
