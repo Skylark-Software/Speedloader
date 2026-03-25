@@ -11,7 +11,7 @@ Fast hybrid RAM/storage management for LLM models.
 Speedloader creates a multi-tier storage system that keeps frequently-used LLM models in RAM for instant access (~10-15 seconds) while storing others on cold storage (local disk, NFS, BeeGFS). Models promote and demote between tiers with one click — or automatically based on placement strategy.
 
 **Features:**
-- Single binary (~5MB) with no dependencies
+- Written in Rust — single binary (~5MB) with no dependencies
 - Web GUI with real-time model and tier management
 - Multi-tier architecture: local RAM, remote RAM (NVMe-oF over RDMA), cold storage
 - Automatic tier selection with fastest-fit, fill-first, or round-robin placement
