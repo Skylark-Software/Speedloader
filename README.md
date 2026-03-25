@@ -8,13 +8,17 @@ Fast hybrid RAM/storage management for LLM models.
 
 ## Overview
 
-Speedloader creates a hybrid storage tier that keeps frequently-used LLM models in RAM for instant access (~10-15 seconds) while storing others on cold storage.
+Speedloader creates a multi-tier storage system that keeps frequently-used LLM models in RAM for instant access (~10-15 seconds) while storing others on cold storage (local disk, NFS, BeeGFS). Models promote and demote between tiers with one click — or automatically based on placement strategy.
 
 **Features:**
 - Single binary (~5MB) with no dependencies
-- Web GUI for easy model management
-- Multi-tier RAM storage with speed-based placement
-- Remote RAM pooling via NVMe-oF over RDMA
+- Web GUI with real-time model and tier management
+- Multi-tier architecture: local RAM, remote RAM (NVMe-oF over RDMA), cold storage
+- Automatic tier selection with fastest-fit, fill-first, or round-robin placement
+- Model pinning to specific tiers
+- One-click remote tier lifecycle (connect/disconnect)
+- Async background transfers with progress indication
+- Cold storage is read-only — never modified by Speedloader
 - Support for Ollama, llama.cpp, vLLM, and HuggingFace backends
 
 ## Quick Start
@@ -28,69 +32,85 @@ cd Speedloader
 sudo cp bin/speedloader /usr/local/bin/
 sudo chmod +x /usr/local/bin/speedloader
 
-# Run interactive installer (detects system, creates config, installs services)
-sudo speedloader install
+# Start the web GUI
+speedloader serve
 
-# Web GUI at http://localhost:5050
+# Open http://localhost:5050 — configure via Settings tab on first run
 ```
 
-## Usage
+Or use the CLI installer for automated setup:
 
 ```bash
-# Show model status
-speedloader status
-
-# Promote a model to RAM
-sudo speedloader promote mixtral:8x7b
-
-# Demote a model from RAM
-sudo speedloader demote llama3:70b
-
-# Start web GUI
-speedloader serve --port 5050
-
-# Show configuration
-speedloader config
-
-# Run health check
-speedloader health
+sudo speedloader install
 ```
 
 ## Web GUI
 
-Access the web dashboard at **http://localhost:5050** after installation.
-
 ### Models Tab
-View hot/cold model status with RAM tier usage. Promote models to RAM or demote them to storage with one click.
+
+View hot and cold model status. Promote models to RAM with one click — Speedloader selects the fastest tier with available space, or uses a pinned tier assignment. Large transfers run in the background with progress updates.
 
 ![Models Tab](docs/screenshot-models.png)
 
 ### Storage Tiers Tab
-Manage multiple RAM storage tiers — local DDR5, remote NVMe-oF over RDMA, and more. Configure model placement strategies and pin specific models to tiers.
 
-**Features:**
-- **Multiple RAM Tiers**: Local tmpfs + remote NVMe-oF RAM pools
-- **Speed Ratings**: DDR5-5600, DDR4-3200, NVMe-oF, etc.
-- **Placement Strategies**: Fastest-fit (auto-failover), fill-first, round-robin
-- **Pinned Models**: Hard-assign models to specific tiers
+Manage local and remote RAM pools with unified lifecycle controls. Each pool can be connected, disconnected, or resized independently. Remote tiers connect via NVMe-oF over RDMA with one-click bring-up.
 
-### Settings Tab
-Configure backend, storage paths, and RAM disk settings.
+![Storage Tiers](docs/screenshot-settings.png)
 
-![Settings Tab](docs/screenshot-settings.png)
+**Local Pools:**
+- tmpfs-backed RAM tiers with configurable size
+- Connect/Disconnect/Resize from the web UI
+- Multiple pools supported (different sizes, speed ratings)
 
-## Commands
+**Remote Pools (NVMe-oF over RDMA):**
+- One-click Connect: creates ramdisk → exports NVMe-oF → connects locally
+- One-click Disconnect: auto-demotes models → unmounts → tears down remote
+- Progress indicators during multi-step operations
+
+**Model Placement:**
+- **Fastest Fit**: auto-failover to next fastest tier with space
+- **Fill First**: fill fastest tier before using next
+- **Round Robin**: distribute across tiers
+- **Pinned Models**: hard-assign specific models to specific tiers
+
+## Architecture
+
+```
+Models Dir (persistent)          Storage Pools (RAM)
+────────────────────             ─────────────────────
+/var/lib/speedloader/models/     /mnt/pools/local/        (local tmpfs)
+  manifests/                     /mnt/nvme-meadowlark/    (remote NVMe-oF)
+  blobs/
+    sha256-abc → cold storage    Cold Storage (read-only)
+    sha256-def → local pool      ─────────────────────
+    sha256-ghi → remote pool     /mnt/beegfs/ollama/models/
+```
+
+- **Models dir** is persistent — survives pool connect/disconnect cycles
+- **Pools** are independent mount points that can be created/destroyed/resized
+- **Cold storage** is never written to by Speedloader
+- **Promote** = copy blob to pool + update symlink in models dir
+- **Demote** = delete from pool + repoint symlink to cold storage
+
+## CLI Commands
 
 | Command | Description |
 |---------|-------------|
+| `serve` | Start web GUI (auto-detects config or starts in setup mode) |
 | `status` | Show hot/cold model status |
-| `promote <model>` | Move model to RAM |
-| `demote <model>` | Move model to storage |
-| `serve` | Start web GUI server |
-| `install` | Interactive installation |
+| `promote <model>` | Move model to fastest available RAM tier |
+| `demote <model>` | Move model back to cold storage |
+| `install` | Interactive CLI installer |
 | `init` | Initialize RAM disk |
-| `config` | Show configuration |
+| `config` | Show current configuration |
 | `health` | Health check and auto-repair |
+
+## Docker
+
+```bash
+docker compose up -d
+```
 
 ## Supported Backends
 
@@ -103,27 +123,39 @@ Configure backend, storage paths, and RAM disk settings.
 
 ## Configuration
 
-Configuration is stored at `/etc/speedloader/config.json`.
+Configuration is stored at `/etc/speedloader/config.json` or `~/.config/speedloader/config.json`.
 
-The interactive installer (`sudo speedloader install`) detects your system and generates the config. You can also edit it manually:
+On first run, `speedloader serve` starts with defaults and shows a setup banner directing you to the Settings tab.
 
 ```json
 {
+  "modelsDir": "/var/lib/speedloader/models",
   "ramdisk": {
     "path": "/mnt/ollama-ramdisk",
-    "size": "32G"
+    "size": "200G"
   },
   "storage": {
-    "path": "/home/user/.ollama/models",
-    "type": "local"
+    "path": "/mnt/beegfs/ollama/models",
+    "type": "beegfs"
   },
   "backend": {
     "type": "ollama",
     "apiUrl": "http://localhost:11434"
   },
-  "web": {
-    "port": 5050,
-    "host": "0.0.0.0"
+  "remoteTiers": {
+    "hosts": {
+      "meadowlark": {
+        "ssh": "service@meadowlark.example.com",
+        "rdmaIp": "10.0.40.2",
+        "ramdiskSize": "128G"
+      }
+    }
+  },
+  "modelPlacement": {
+    "defaultStrategy": "fastest-fit",
+    "pinned": {
+      "llama3.2-vision:90b": "meadowlark"
+    }
   }
 }
 ```
@@ -133,6 +165,7 @@ The interactive installer (`sudo speedloader install`) detects your system and g
 - Linux (x86_64 or ARM64)
 - Systemd (for service management)
 - Root access (for RAM disk mounting)
+- Optional: InfiniBand/RDMA for remote tiers
 
 ## License
 
